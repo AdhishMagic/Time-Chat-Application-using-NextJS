@@ -1,27 +1,31 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-declare global {
-  // eslint-disable-next-line no-var
-  var mongooseCache:
-    | {
-        conn: typeof mongoose | null;
-        promise: Promise<typeof mongoose> | null;
-      }
-    | undefined;
+const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME;
+
+if (!MONGODB_URI) {
+  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
 }
 
-const mongodbUri: string = process.env.MONGODB_URI ?? "";
-
-if (!mongodbUri) {
-  throw new Error("Please define MONGODB_URI in .env.local");
+if (!MONGODB_DB_NAME) {
+  throw new Error('Invalid/Missing environment variable: "MONGODB_DB_NAME"');
 }
 
-const cache = global.mongooseCache ?? {
-  conn: null,
-  promise: null,
+interface MongooseConnection {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+// Global object to persist connections across hot reloads in development
+const globalWithMongoose = global as typeof globalThis & {
+  mongoose: MongooseConnection;
 };
 
-global.mongooseCache = cache;
+let cached: MongooseConnection = globalWithMongoose.mongoose;
+
+if (!cached) {
+  cached = globalWithMongoose.mongoose = { conn: null, promise: null };
+}
 
 /**
  * Structured logging utility
@@ -29,7 +33,7 @@ global.mongooseCache = cache;
 const dbLog = {
   info: (message: string) => console.log(`[DB] ${message}`),
   error: (message: string, error?: Error) => {
-    console.error(`[DB] ${message}`, error ? `\n${error.message}` : "");
+    console.error(`[DB] ${message}`, error ? `\n${error.message}` : '');
   },
   warn: (message: string) => console.warn(`[DB] ${message}`),
 };
@@ -58,30 +62,23 @@ export function isConnected(): boolean {
  * @throws {Error} If connection fails after max retries
  */
 export async function connectDB(): Promise<typeof mongoose> {
-  return connectToDatabase();
-}
-
-/**
- * Legacy function name for backward compatibility
- */
-export async function connectToDatabase(): Promise<typeof mongoose> {
   // Check if already connected
-  if (cache.conn && isConnected()) {
-    dbLog.info("Reusing existing connection");
-    return cache.conn;
+  if (cached.conn && isConnected()) {
+    dbLog.info('Reusing existing connection');
+    return cached.conn;
   }
 
   // Prevent duplicate connection attempts
-  if (cache.promise) {
-    dbLog.info("Connection attempt in progress, reusing promise");
-    return await cache.promise;
+  if (cached.promise) {
+    dbLog.info('Connection attempt in progress, reusing promise');
+    return cached.promise;
   }
 
-  dbLog.info("Initiating new MongoDB connection");
+  dbLog.info('Initiating new MongoDB connection');
 
-  cache.promise = mongoose
-    .connect(mongodbUri, {
-      dbName: process.env.MONGODB_DB_NAME ?? "time_chat_app",
+  cached.promise = mongoose
+    .connect(MONGODB_URI!, {
+      dbName: MONGODB_DB_NAME,
       bufferCommands: false,
       // Connection pool and timeout settings for stability
       maxPoolSize: 10,
@@ -91,22 +88,22 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
       family: 4, // Use IPv4
     })
     .then((connection) => {
-      dbLog.info("Connected successfully");
+      dbLog.info('Connected successfully');
       return connection;
     })
     .catch((error: Error) => {
-      dbLog.error("Connection failed", error);
-      cache.promise = null;
+      dbLog.error('Connection failed', error);
+      cached.promise = null;
       throw error;
     });
 
   try {
-    cache.conn = await cache.promise;
+    cached.conn = await cached.promise;
     setupConnectionEventListeners();
-    return cache.conn;
+    return cached.conn;
   } catch (error) {
-    cache.promise = null;
-    cache.conn = null;
+    cached.promise = null;
+    cached.conn = null;
     throw error;
   }
 }
@@ -117,20 +114,20 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
 function setupConnectionEventListeners(): void {
   const db = mongoose.connection;
 
-  db.on("connected", () => {
-    dbLog.info("Mongoose connected to MongoDB");
+  db.on('connected', () => {
+    dbLog.info('Mongoose connected to MongoDB');
   });
 
-  db.on("error", (error: Error) => {
-    dbLog.error("Mongoose connection error", error);
+  db.on('error', (error: Error) => {
+    dbLog.error('Mongoose connection error', error);
   });
 
-  db.on("disconnected", () => {
-    dbLog.info("Mongoose disconnected from MongoDB");
+  db.on('disconnected', () => {
+    dbLog.info('Mongoose disconnected from MongoDB');
   });
 
-  db.on("reconnected", () => {
-    dbLog.info("Mongoose reconnected to MongoDB");
+  db.on('reconnected', () => {
+    dbLog.info('Mongoose reconnected to MongoDB');
   });
 }
 
@@ -139,14 +136,14 @@ function setupConnectionEventListeners(): void {
  * Useful for cleanup in tests or when shutting down the server
  */
 export async function disconnectDB(): Promise<void> {
-  if (cache.conn || isConnected()) {
+  if (cached.conn || isConnected()) {
     try {
       await mongoose.disconnect();
-      cache.conn = null;
-      cache.promise = null;
-      dbLog.info("Disconnected");
+      cached.conn = null;
+      cached.promise = null;
+      dbLog.info('Disconnected');
     } catch (error) {
-      dbLog.error("Disconnect error", error as Error);
+      dbLog.error('Disconnect error', error as Error);
       throw error;
     }
   }
@@ -157,17 +154,17 @@ export async function disconnectDB(): Promise<void> {
  * Closes DB connection on process termination
  */
 export function setupGracefulShutdown(): void {
-  const signals: Array<NodeJS.Signals> = ["SIGINT", "SIGTERM"];
+  const signals: Array<NodeJS.Signals> = ['SIGINT', 'SIGTERM'];
 
   signals.forEach((signal) => {
     process.on(signal, async () => {
       dbLog.warn(`Received ${signal}, closing database connection`);
       try {
         await disconnectDB();
-        dbLog.info("Database connection closed");
+        dbLog.info('Database connection closed');
         process.exit(0);
       } catch (error) {
-        dbLog.error("Error during graceful shutdown", error as Error);
+        dbLog.error('Error during graceful shutdown', error as Error);
         process.exit(1);
       }
     });
