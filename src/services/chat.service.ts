@@ -208,3 +208,18 @@ export async function editMessageWithOptimisticConcurrency(params: {
 
   return updated;
 }
+
+/**
+ * Get welcome message for chat page
+ */
+export function getWelcomeMessage(): string {
+  return "Welcome to Time Chat Application! Start a conversation by typing a message below.";
+}
+
+/**
+ * Get server time message for API testing
+ */
+export function getServerTimeMessage(): string {
+  const now = new Date();
+  return `Server Time: ${now.toISOString()}`;
+}

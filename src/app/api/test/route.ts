@@ -18,15 +18,18 @@ export async function GET(request: NextRequest) {
       3: "disconnecting",
     };
 
-    return NextResponse.json({
-      ok: true,
-      message: getServerTimeMessage(),
-      database: {
-        connected: connectionState === 1,
-        state: stateMap[connectionState] || "unknown",
-        timestamp: new Date().toISOString(),
+    return NextResponse.json(
+      {
+        ok: true,
+        message: getServerTimeMessage(),
+        database: {
+          connected: connectionState === 1,
+          state: stateMap[connectionState] || "unknown",
+          timestamp: new Date().toISOString(),
+        },
       },
-    });
+      { status: 200 }
+    );
   } catch (error) {
     console.error("API test route error:", error);
     return NextResponse.json(
@@ -47,7 +50,19 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch (error) {
+      console.error("POST error: Invalid JSON", error);
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Invalid JSON in request body",
+        },
+        { status: 400 }
+      );
+    }
 
     // Example: You would use your Mongoose models here
     // const result = await YourModel.create(body);
