@@ -1,4 +1,4 @@
-import { type Document, type Model, Schema, model, models } from "mongoose";
+import { type Document, type Model, Schema, model, models, Types } from "mongoose";
 
 export type UserStatus = "online" | "offline";
 
@@ -8,6 +8,8 @@ export interface IUser extends Document {
   password: string;
   avatar?: string;
   status: UserStatus;
+  roleId?: Types.ObjectId;
+  tokenVersion: number;
   lastSeen?: Date;
   lastMessageSentAt?: Date;
   createdAt: Date;
@@ -38,6 +40,12 @@ const userSchema = new Schema<IUser>(
       default: "offline",
       required: true,
     },
+    roleId: {
+      type: Schema.Types.ObjectId,
+      ref: "Role",
+      default: null,
+    },
+    tokenVersion: { type: Number, default: 0 },
     lastSeen: { type: Date, default: null },
     lastMessageSentAt: { type: Date, default: null },
   },

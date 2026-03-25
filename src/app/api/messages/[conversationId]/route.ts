@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
-import { getMessagesService } from '@/services/message';
+import { getMessagesService } from '@/services/message/get-messages.service';
 import { getMessagesSchema } from '@/schemas/message';
-import { ZodError } from 'zod';
+import { hasPermission } from '@/services/permission.service';
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
@@ -66,10 +66,20 @@ export async function GET(
     const { conversationId } = await params;
 
     const userId = request.headers.get('x-user-id');
+
     if (!userId) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Check permission to read conversations
+    const canReadConversations = await hasPermission(userId, 'conversation:read');
+    if (!canReadConversations) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
       );
     }
 
@@ -117,7 +127,6 @@ export async function GET(
       );
     }
 
-    console.error('[API] GET /api/messages/[conversationId]:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

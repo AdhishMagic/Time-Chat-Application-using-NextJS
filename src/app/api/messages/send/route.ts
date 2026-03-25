@@ -1,29 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
-import { sendMessageService } from '@/services/message';
+import { sendMessageService } from '@/services/message/send-message.service';
 import { sendMessageSchema } from '@/schemas/message';
-
-function mapSendMessageErrorToStatus(error: string): number {
-  switch (error) {
-    case 'User not found':
-    case 'Conversation not found':
-      return 404;
-    case 'Not a member of this conversation':
-      return 403;
-    default:
-      return 500;
-  }
-}
+import { hasPermission } from '@/services/permission.service';
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
     const userId = request.headers.get('x-user-id');
+
     if (!userId) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    const canCreate = await hasPermission(userId, 'message:create');
+    if (!canCreate) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
       );
     }
 
@@ -46,21 +44,21 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await sendMessageService(parsed.data, userId);
-
     return NextResponse.json({ success: true, data }, { status: 201 });
   } catch (error) {
-    if (error instanceof Error) {
-      const status = mapSendMessageErrorToStatus(error.message);
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status }
-      );
-    }
+    const status =
+      error instanceof Error
+        ? error.message === 'User not found' ||
+          error.message === 'Conversation not found'
+          ? 404
+          : error.message === 'Not a member of this conversation'
+          ? 403
+          : 500
+        : 500;
 
-    console.error('[API] POST /api/messages/send:', error);
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
+      { success: false, error: error instanceof Error ? error.message : 'Internal server error' },
+      { status }
     );
   }
 }

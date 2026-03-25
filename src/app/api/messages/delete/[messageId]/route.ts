@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Types } from 'mongoose';
+import { connectDB } from '@/lib/db';
+import { hasPermission } from '@/services/permission.service';
+import { checkOwnership } from '@/lib/auth/check-ownership';
+import Message from '@/models/Message';
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ messageId: string }> }
 ) {
   try {
-    const { messageId } = await params;
+    await connectDB();
 
+    const { messageId } = await params;
     const userId = request.headers.get('x-user-id');
 
     if (!userId) {
@@ -17,26 +22,43 @@ export async function DELETE(
       );
     }
 
-    if (!messageId) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid message id' },
-        { status: 400 }
-      );
-    }
-
-    if (!Types.ObjectId.isValid(messageId)) {
+    if (!messageId || !Types.ObjectId.isValid(messageId)) {
       return NextResponse.json(
         { success: false, error: 'Invalid message id format' },
         { status: 400 }
       );
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Delete functionality not yet implemented' },
-      { status: 501 }
-    );
+    const canDelete = await hasPermission(userId, 'message:delete');
+    if (!canDelete) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
+      );
+    }
+
+    const message = await Message.findById(messageId);
+    if (!message) {
+      return NextResponse.json(
+        { success: false, error: 'Message not found' },
+        { status: 404 }
+      );
+    }
+
+    const owns = await checkOwnership(message.senderId.toString(), userId);
+    if (!owns) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden' },
+        { status: 403 }
+      );
+    }
+
+    message.isDeleted = true;
+    await message.save();
+
+    return NextResponse.json({ success: true, data: message }, { status: 200 });
   } catch (error) {
-    console.error('[API] DELETE /api/messages/delete/[messageId]:', error);
+    console.error('Delete message error:', error);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
