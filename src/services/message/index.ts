@@ -1,2 +1,2 @@
-export * from './send-message.service';
-export * from './get-messages.service';
+﻿// Backward compatibility: re-export from new module location
+export * from '@/modules/chat/services';

@@ -4,7 +4,7 @@
  * Repository pattern: Abstracts DB layer from business logic
  */
 
-import { connectDB } from '@/lib/db';
+import { connectDB } from '@/core/db';
 import User from '@/models/User';
 
 export interface CreateUserInput {

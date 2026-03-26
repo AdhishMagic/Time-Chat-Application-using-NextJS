@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
-import { loginUserService } from '@/services/auth';
-import { loginSchema } from '@/schemas/auth';
-import { signToken } from '@/lib/jwt';
+import { connectDB } from '@/core/db';
+import { loginUserService } from '@/modules/auth/services';
+import { loginSchema } from '@/modules/auth/schemas';
+import { signToken } from '@/core/auth';
 import {
   checkLoginAttempts,
   recordFailedLogin,
   clearLoginAttempts,
-} from '@/lib/rate-limit';
+} from '@/core/utils/rate-limit';
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    response.cookies.set('auth_token', token, {
+    response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

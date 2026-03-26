@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
-import { sendMessageService } from '@/services/message/send-message.service';
-import { sendMessageSchema } from '@/schemas/message';
+import { connectDB } from '@/core/db';
+import { sendMessageService } from '@/modules/chat/services';
+import { sendMessageSchema } from '@/modules/chat/schemas';
 import { hasPermission } from '@/services/permission.service';
 
 export async function POST(request: NextRequest) {

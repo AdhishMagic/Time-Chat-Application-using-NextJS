@@ -1,2 +1,2 @@
-export * from './send-message.schema';
-export * from './get-messages.schema';
+﻿// Backward compatibility: re-export from new module location
+export * from '@/modules/chat/schemas';

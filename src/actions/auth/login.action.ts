@@ -1,10 +1,10 @@
 'use server';
 
-import { connectDB } from '@/lib/db';
-import { loginUserService } from '@/services/auth';
-import { loginSchema } from '@/schemas/auth';
-import { signToken } from '@/lib/jwt';
-import { handleError, createSuccessResponse } from '@/lib/error-handler';
+import { connectDB } from '@/core/db';
+import { loginUserService } from '@/modules/auth/services';
+import { loginSchema } from '@/modules/auth/schemas';
+import { signToken } from '@/core/auth';
+import { handleError, createSuccessResponse } from '@/core/utils/error-handler';
 
 export async function loginAction(input: unknown) {
   try {

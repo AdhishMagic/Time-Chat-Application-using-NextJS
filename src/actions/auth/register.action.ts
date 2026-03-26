@@ -1,9 +1,9 @@
 'use server';
 
-import { connectDB } from '@/lib/db';
-import { registerUserService } from '@/services/auth';
-import { registerSchema } from '@/schemas/auth';
-import { handleError, createSuccessResponse } from '@/lib/error-handler';
+import { connectDB } from '@/core/db';
+import { registerUserService } from '@/modules/auth/services';
+import { registerSchema } from '@/modules/auth/schemas';
+import { handleError, createSuccessResponse } from '@/core/utils/error-handler';
 
 export async function registerAction(input: unknown) {
   try {

@@ -1,4 +1,2 @@
-export const MAX_PAGINATION_LIMIT = 50;
-export const DEFAULT_PAGINATION_LIMIT = 20;
-export const MAX_MESSAGE_LENGTH = 5000;
-export const MAX_CLIENT_MESSAGE_ID_LENGTH = 128;
+// Backward compatibility: re-export from new location
+export * from '@/core/utils/constants';

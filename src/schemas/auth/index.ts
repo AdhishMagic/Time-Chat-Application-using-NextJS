@@ -1,2 +1,2 @@
-export * from './register.schema';
-export * from './login.schema';
+﻿// Backward compatibility: re-export from new module location
+export * from '@/modules/auth/schemas';

@@ -1,16 +1,19 @@
 'use server';
 
-import { connectDB } from '@/lib/db';
-import { sendMessageSchema } from '@/schemas/message';
-import { sendMessageService } from '@/services/message';
-import { handleError, createSuccessResponse } from '@/lib/error-handler';
-import type { ActionResponse } from '@/lib/error-handler';
+import { headers } from 'next/headers';
+import { connectDB } from '@/core/db';
+import { sendMessageSchema } from '@/modules/chat/schemas';
+import { sendMessageService } from '@/modules/chat/services';
+import { handleError, createSuccessResponse } from '@/core/utils/error-handler';
+import type { ActionResponse } from '@/core/utils/error-handler';
 
 export async function sendMessageAction(
-  input: unknown,
-  userId: string
+  input: unknown
 ): Promise<ActionResponse<any>> {
   try {
+    const headersList = await headers();
+    const userId = headersList.get('x-user-id');
+
     if (!userId) {
       return {
         success: false,

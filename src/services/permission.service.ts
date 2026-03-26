@@ -2,7 +2,7 @@ import User from '@/models/User';
 import Role from '@/models/Role';
 import Permission from '@/models/Permission';
 import RolePermission from '@/models/RolePermission';
-import { connectDB } from '@/lib/db';
+import { connectDB } from '@/core/db';
 
 const permissionCache = new Map<string, Set<string>>();
 const CACHE_TTL = 5 * 60 * 1000;

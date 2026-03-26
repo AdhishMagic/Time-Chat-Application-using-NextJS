@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 
 import { getServerTimeMessage } from "@/services/chat.service";
-import { connectDB } from "@/lib/db";
+import { connectDB } from "@/core/db";
 import mongoose from "mongoose";
 
 export async function GET(request: NextRequest) {

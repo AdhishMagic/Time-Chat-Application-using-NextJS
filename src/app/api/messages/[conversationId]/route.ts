@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
-import { getMessagesService } from '@/services/message/get-messages.service';
-import { getMessagesSchema } from '@/schemas/message';
+import { connectDB } from '@/core/db';
+import { getMessagesService } from '@/modules/chat/services';
+import { getMessagesSchema } from '@/modules/chat/schemas';
 import { hasPermission } from '@/services/permission.service';
 
 const DEFAULT_LIMIT = 20;

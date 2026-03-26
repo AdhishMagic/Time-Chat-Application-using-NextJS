@@ -1,4 +1,4 @@
-import { connectDB } from '@/lib/db';
+import { connectDB } from '@/core/db';
 import Role from '@/models/Role';
 import Permission from '@/models/Permission';
 import RolePermission from '@/models/RolePermission';

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Types } from 'mongoose';
-import { connectDB } from '@/lib/db';
+import { connectDB } from '@/core/db';
 import { hasPermission } from '@/services/permission.service';
-import { checkOwnership } from '@/lib/auth/check-ownership';
+import { checkOwnership } from '@/core/auth';
 import Message from '@/models/Message';
 
 export async function DELETE(

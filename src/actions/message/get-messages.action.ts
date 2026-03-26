@@ -1,17 +1,20 @@
 'use server';
 
-import { connectDB } from '@/lib/db';
-import { getMessagesSchema } from '@/schemas/message';
-import { getMessagesService } from '@/services/message';
-import { handleError, createSuccessResponse } from '@/lib/error-handler';
-import { DEFAULT_PAGINATION_LIMIT } from '@/lib/constants';
-import type { ActionResponse } from '@/lib/error-handler';
+import { headers } from 'next/headers';
+import { connectDB } from '@/core/db';
+import { getMessagesSchema } from '@/modules/chat/schemas';
+import { getMessagesService } from '@/modules/chat/services';
+import { handleError, createSuccessResponse } from '@/core/utils/error-handler';
+import { DEFAULT_PAGINATION_LIMIT } from '@/core/utils';
+import type { ActionResponse } from '@/core/utils/error-handler';
 
 export async function getMessagesAction(
-  input: unknown,
-  userId: string
+  input: unknown
 ): Promise<ActionResponse<any>> {
   try {
+    const headersList = await headers();
+    const userId = headersList.get('x-user-id');
+
     if (!userId) {
       return {
         success: false,

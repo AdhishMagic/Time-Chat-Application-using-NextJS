@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
-import { registerUserService } from '@/services/auth';
-import { registerSchema } from '@/schemas/auth';
+import { connectDB } from '@/core/db';
+import { registerUserService } from '@/modules/auth/services';
+import { registerApiSchema } from '@/modules/auth/schemas';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,10 +17,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const parsed = registerSchema.safeParse(body);
+    const parsed = registerApiSchema.safeParse(body);
     if (!parsed.success) {
+      const firstError = parsed.error.issues[0];
       return NextResponse.json(
-        { success: false, error: parsed.error.issues[0]?.message || 'Validation failed' },
+        { 
+          success: false, 
+          error: firstError?.message || 'Validation failed' 
+        },
         { status: 400 }
       );
     }
@@ -29,20 +33,12 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: result }, { status: 201 });
   } catch (error) {
-    if (error instanceof Error) {
-      const status = error.message.includes('already')
-        ? 409
-        : 500;
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status }
-      );
-    }
-
-    console.error('[API] POST /api/auth/register:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    const status = errorMessage.includes('already') ? 409 : 500;
+    
     return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
+      { success: false, error: errorMessage },
+      { status }
     );
   }
 }
